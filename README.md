@@ -1,6 +1,7 @@
 combines `simparse` [1] and `callgpt` [2] to take unstructured data (such as a web page or article) and extract declared entities into nodes (and edges to define relationships between nodes) 
 
 [1] https://github.com/hversu/simparse
+
 [2] https://github.com/hversu/gptcall
 
 example usage:
