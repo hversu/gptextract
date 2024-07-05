@@ -1,7 +1,6 @@
-use tokio; // Your project will need to include the tokio crate as a dependency
-use serde_json::json;
+use tokio;
 use std::env;
-use reqwest::{Proxy, Client};
+use reqwest::{Client};
 use select::document::Document;
 use select::predicate::Any;
 use std::error::Error;
@@ -10,10 +9,8 @@ use serde::{Serialize, Deserialize};
 mod my_secret;
 use crate::my_secret::API_KEY_VAR;
 
-
-
 #[derive(Serialize, Deserialize)]
-struct TagValuePair {
+pub struct TagValuePair {
     tag: String,
     value: String,
 }
@@ -81,13 +78,30 @@ async fn call_openai_chat(
     }
 }
 
-pub async fn fetch_and_extract(url: &str, tags: Vec<&str>) -> Result<Vec<TagValuePair>, Box<dyn Error>> {
-    // Create a reqwest client with SOCKS5 proxy pointing to TOR proxy port
-    let proxy = Proxy::all("socks5h://127.0.0.1:9050")?;
-    let client = Client::builder()
-        .proxy(proxy)
-        .build()?;
+// pub async fn fetch_and_extract(url: &str, tags: Vec<&str>) -> Result<Vec<TagValuePair>, Box<dyn Error>> {
+//     // Create a reqwest client with SOCKS5 proxy pointing to TOR proxy port
+//     let proxy = Proxy::all("socks5h://127.0.0.1:9050")?;
+//     let client = Client::builder()
+//         .proxy(proxy)
+//         .build()?;
 
+
+
+// pub async fn fetch_and_extract(url: &str, tags: Vec<&str>, proxy_url: &str) -> Result<Vec<TagValuePair>, Box<dyn Error>> {
+//     // Create a reqwest client with the provided proxy
+//     let proxy = reqwest::Proxy::all(proxy_url)?;
+//     let client = Client::builder()
+//         .proxy(proxy)
+//         .build()?;
+
+pub async fn fetch_and_extract(url: &str, tags: Vec<&str>, proxy_url: Option<&str>) -> Result<Vec<TagValuePair>, Box<dyn Error>> {
+    let client = if let Some(proxy_url) = proxy_url {
+        let proxy = reqwest::Proxy::all(proxy_url)?;
+        Client::builder().proxy(proxy).build()?
+    } else {
+        Client::new()
+    };
+    println!("{:?}", client);
     // Fetch the content from the URL
     let res = client
         .get(url)
@@ -127,7 +141,7 @@ pub async fn fetch_and_extract(url: &str, tags: Vec<&str>) -> Result<Vec<TagValu
     Ok(results)
 }
 
-async fn information_extraction(input: &str, entities: Option<&[&str]>, api_key_var: &str) -> Result<String, Box<dyn Error>> {
+async fn information_extraction(input: &str, entities: Option<&[&str]>, api_key_var: &str, proxy_url: Option<&str>) -> Result<String, Box<dyn Error>> {
     // Handle optional entities
     let entities_list = match entities {
         Some(list) => list,
@@ -139,7 +153,7 @@ async fn information_extraction(input: &str, entities: Option<&[&str]>, api_key_
     if input.starts_with("http://") || input.starts_with("https://") {
         // Fetch and extract tags from the URL
         let tags = vec!["h1", "h2", "h3", "h4", "p", "article", "td", "ul", "li", "lo", "a", "a.href"];
-        let results = fetch_and_extract(input, tags).await?;
+        let results = fetch_and_extract(input, tags, proxy_url).await?;
         // Concatenate all tag values into a single text blob
         text_blob = results.iter().map(|result| result.value.clone()).collect::<Vec<String>>().join(" ");
     } else {
@@ -181,7 +195,9 @@ async fn main() {
         None
     };
 
-    match information_extraction(input, entities.as_deref(), API_KEY_VAR).await {
+    let proxy_url: Option<&str> = None;
+    // let proxy_url: &str = "socks5h://127.0.0.1:9050";
+    match information_extraction(input, entities.as_deref(), API_KEY_VAR, proxy_url).await {
         Ok(response) => println!("OpenAI Response: {}", response),
         Err(e) => eprintln!("Error: {}", e),
     }
