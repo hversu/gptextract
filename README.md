@@ -4,7 +4,7 @@ combines `simparse` [1] and `callgpt` [2] to take unstructured data (such as a w
 
 [2] https://github.com/hversu/gptcall
 
-# CONFIG
+## Config
 
 - Requires: OpenAI API Key (update my_secret.rs)
 
@@ -13,7 +13,7 @@ combines `simparse` [1] and `callgpt` [2] to take unstructured data (such as a w
   2. uncomment `let proxy_url: &str = "socks5h://127.0.0.1:9050";` - edit if using your own proxy
   3. comment out `let proxy_url: Option<&str> = None;`
 
-# EXAMPLE
+## Example Usage
 
 example usage:
 `cargo run https://news.google.com organization,country,person,demographic,event`
