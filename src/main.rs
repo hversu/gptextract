@@ -44,7 +44,7 @@ async fn call_openai_chat(
 ) -> Result<String, Box<dyn Error>> {
     // Create the request body
     let request_body = ChatRequest {
-        model: "gpt-3.5-turbo".to_string(),
+        model: "gpt-4-turbo".to_string(),
         messages: vec![
             Message {
                 role: "system".to_string(),
